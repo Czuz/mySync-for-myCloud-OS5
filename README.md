@@ -10,8 +10,11 @@ You might use mySync to periodically sync selected directories or backup whole N
 3) mySync has been created for my personal needs. I have focused on the core function. Once setup it works reliably. Since deployment and setup is a one time event it is not as convenient as you might want.
 
 ## Prerequisits
-1) WD MyCloud **OS5** SDK - you will need mksapkg tool to build a package. To get OS5 version you need to ask on the [WD Community site](https://community.wd.com/c/os5). [Official site](https://developer.westerndigital.com/develop/wd/sdk.html) contains still the previous OS3 version.
-2) rclone - [download](https://github.com/rclone/rclone/releases) or compile binary for your NAS and place it under mySync/bin/ directory.
+1) WD MyCloud **OS5** SDK - you will need mksapkg tool to build a package. You can:
+   - Check if the [official site](https://developer.westerndigital.com/develop/wd/sdk.html) has been updated to include mksapkg for OS5.
+   - Check on the [official WD community site](https://community.wd.com/t/whare-are-the-os5-sdk-tools/266486/3).
+   - Download from some unofficial source at your own risk (expect md5sum: 15ec19d9bf8c7c46f52e9017fd426c3e)
+3) rclone - [download](https://github.com/rclone/rclone/releases) or compile binary for your NAS and place it under mySync/bin/ directory.
 
 ## How to configure
 There are two configuration files you will have to customize:
@@ -38,6 +41,19 @@ where:
 * *remote* is a name of your rclone defined remote site
 * *target_path* is a path on the remote site
 * *options* are optional rclone options you might want to define, e.g. --max-duration duration
+
+By default following options are used:
+```
+--create-empty-src-dirs
+--log-level INFO
+--delete-after
+--copy-links
+--retries 10
+--retries-sleep 60s
+--stats 0
+--stats-one-line
+--log-file
+```
 
 ## How to build
 Before building make sure your configuration files are in the mySync/etc/ and rclone is under mySync/bin/.

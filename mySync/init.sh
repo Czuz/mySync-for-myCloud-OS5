@@ -11,7 +11,7 @@ volume=$(echo ${path:-/tmp} | cut -c 1-13)
 ln -s ${path}/bin/rclone /usr/bin/rclone
 
 # Create symbolic link for web content
-ln -s ${path}/web /var/www/apps/mySync 
+ln -s ${path}/web /var/www/apps/mySync
 
 # Create location for persistent logs and configuration
 mkdir -p ${volume:-/tmp}/.systemfile/mySync/log

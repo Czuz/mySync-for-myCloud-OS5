@@ -1,6 +1,6 @@
 Package:            mySync
-Section:            Addon
-Version:            0.9.1
+Section:            Apps
+Version:            0.9.2
 Packager:           Czuz
 Email:
 Homepage:           https://github.com/Czuz/mySync-for-myCloud-OS5
@@ -8,12 +8,12 @@ Description:        Personal App for automatic synchronization with Cloud Storag
 Icon:               mySync.png
 AddonShowName:      mySync
 AddonIndexPage:     index.php
-AddonUsedPort: 
+AddonUsedPort:
 InstDepend:
-InstConflict: 
-StartDepend: 
+InstConflict:
+StartDepend:
 StartConflict:
-CenterType:
-UserControl: 1
-MinFWVer: 5.0.0
+CenterType:         1
+UserControl:        1
+MinFWVer:           5.0.0
 MaxFWVer:

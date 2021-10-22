@@ -78,10 +78,16 @@ In the MyCloud Administration Console select Apps menu and use "Install an app m
 ## Troubleshooting
 Logs are kept by default here: /mnt/HD/HD_a2/.systemfile/mySync/log
 
+## Changes
+\[2021-10-22\] - v0.9.2
+- First version of Online log browsing in MyCloud Administration Console
+- Several fixes to file permissions and apkg.rc
+
 ## Appendix: Functions
 - [x] Remote backup with plenty of connectivity options
 - [x] Multiple sync jobs
 - [x] Automatically restarts after NAS restart
 - [ ] Integration with notification services of MyCloud
-- [ ] Online log browsing in MyCloud Administration Console
+- [x] Online log browsing in MyCloud Administration Console
 - [ ] Online configuration in MyCloud Administration Console
+- [ ] Log retention

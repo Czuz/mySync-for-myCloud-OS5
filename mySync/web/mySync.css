@@ -1,0 +1,90 @@
+#apps_mySyncRemotes_info,
+#apps_mySyncFlows_info,
+#apps_mySyncFlows_input  {
+    font-family: 'Courier New', Courier, monospace;
+    overflow: auto;
+    height: 100px;
+}
+
+#apps_mySyncLogsContent {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+#apps_mySyncLogsContent li {
+    text-decoration: none;
+    font-family: 'Courier New', monospace;
+    display: block;
+}
+
+#apps_mySyncLogsSubMenuContainer {
+    height: 100%;
+    width: 100%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+#apps_mySyncLogsSubMenuContainer::-webkit-scrollbar {
+    display: none;
+}
+
+#apps_mySyncLogsSubMenu {
+    list-style-type: none;
+    line-height: normal;
+    display: block;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    background-color: #F4F4F4;
+}
+
+#apps_mySyncLogsSubMenu li a {
+    display: block;
+    height: 45px;
+    padding: 5px;
+    width: 214px;
+    word-wrap: break-word;
+    text-decoration: none;
+    color: #4B5A68;
+}
+
+#apps_mySyncLogsSubMenu li a:hover {
+    background-color: #dcdcdc;
+    color: #4B5A68;
+}
+
+#apps_mySyncLogsSubMenu li a.active {
+    background-color: #15abff;
+    color: white;
+}
+
+#apps_mySync_notifications {
+    position: fixed;
+    z-index: +1;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 10px;
+    min-width: 60%;
+}
+
+.statbox {
+    display: inline-block;
+    background-color: #dcdcdc;
+    color: #4B5A68;
+    border-radius: 10px;
+    min-width: 40px;
+    text-align: left;
+    font-size: 10px;
+    padding: 3px;
+}
+
+@media (min-width: 768px) {
+    .modal-xl {
+        width: 95%;
+        max-width: 1200px;
+    }
+}

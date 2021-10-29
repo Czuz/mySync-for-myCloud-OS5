@@ -5,11 +5,98 @@ var errorLevel = {
 }
 
 var confType = {
-    Remotes: 1,
-    Flows: 2
+    Remotes: {
+        id: 1,
+        prefix: "apps_mySyncRemotes"
+    },
+    Flows: {
+        id: 2,
+        prefix: "apps_mySyncFlows"
+    }
 }
 
+// Validator
+function init_validation() {
+    $.validator.setDefaults({
+        errorElement: "div",
+        errorPlacement: function (error, element) {
+            // Add the `invalid-feedback` class to the error element
+            error.addClass("invalid-feedback");
+
+            // Add `was-validated` class to the parent form
+            // in order to add icons to inputs
+            // element.parents(".form-horizontal").addClass("was-validated");
+
+            if (element.prop("type") === "checkbox") {
+                error.insertAfter(element.parent("label"));
+            } else {
+                error.insertAfter(element);
+            }
+        },
+        highlight: function (element, errorClass, validClass) {
+            $(element).removeClass("is-valid").addClass("is-invalid");
+        },
+        unhighlight: function (element, errorClass, validClass) {
+            $(element).removeClass("is-invalid").addClass("is-valid");
+        },
+    });
+    $.validator.addMethod(
+        "noUnfinishedLines",
+        function(value) {
+            return value
+                .split('\n')                    // Split by line
+                .filter(x => x.length > 0)      // Exclude empty lines
+                .map(x => x.split('|'))         // Split by pipe (|)
+                // Test if there are no unfinished lines
+                .filter(x => x.length < 2).length == 0;
+        },
+        "Provide at least source and target path separated by pipe ('|')"
+    );
+    $.validator.addMethod(
+        "noUnescapedCharacters",
+        function(value) {
+            return value
+                .split('\n')                    // Split by line
+                .filter(x => x.length > 0)      // Exclude empty lines
+                .map(x => x.split('|'))         // Split by pipe (|)
+                // Test if there are no unescaped characters
+                .filter(x => x.length >= 2)
+                // Search for lines with unescaped special characters in paths
+                .map(x =>
+                    (x[0].search(/"/gm) == -1 && (x[0].search(/^'[^']*'$/gm) > -1 || x[0].search(/([^\\\\])([ *?$'])/gm) == -1)) &&
+                    (x[1].search(/"/gm) == -1 && (x[1].search(/^'[^']*'$/gm) > -1 || x[1].search(/([^\\\\])([ *?$'])/gm) == -1)))
+                // Agregate result to single true or false
+                .reduce((p,n) => p && n);
+        },
+        "If your paths have spaces or shell metacharacters (e.g. *, ?, $, ', etc.) then you must escape them with '\\' (e.g. \\?). Don't use \" character."
+    );
+    $("#apps_mySyncFlows_form").validate({
+        rules: {
+            apps_mySyncFlows_input: {
+                noUnfinishedLines: true,
+                noUnescapedCharacters: true,
+            }
+        },
+        submitHandler: function () {
+            submit_configuration(confType.Flows);
+        }
+    });
+    $("#apps_mySyncRemotes_form").validate({
+        rules: {
+            apps_mySyncRemotes_input: "required",
+        },
+        messages: {
+            apps_mySyncRemotes_input: "Please select a rclone.conf to upload",
+        },
+        submitHandler: function () {
+            submit_configuration(confType.Remotes);
+        }
+    });
+}
+
+// Page controler
 function page_load() {
+    init_validation();
     $("#apps_mySyncAbout_button").click(function() {
         $("#mySyncAbout").show();
         $("#mySyncRemotes").hide();
@@ -20,7 +107,7 @@ function page_load() {
         $("#mySyncRemotes").show();
         $("#mySyncFlows").hide();
         if (!$("#apps_mySyncRemotes_info").val()) {
-            get_remotes_conf();
+            get_conf(confType.Remotes);
         }
     });
     $("#apps_mySyncFlows_button").click(function() {
@@ -28,58 +115,21 @@ function page_load() {
         $("#mySyncRemotes").hide();
         $("#mySyncFlows").show();
         if (!$("#apps_mySyncFlows_input").val()) {
-            get_flows_conf();
+            get_conf(confType.Flows);
         }
         if (!$("#apps_mySyncFlows_info").val()) {
-            get_remotes_conf();
+            get_conf(confType.Remotes);
         }
     });
     $("#apps_mySyncFlows_input").on('input', function () {
         this.style.height = "";
         this.style.height = (5+((this.scrollHeight < 95) ? 95 : (this.scrollHeight > 345) ? 345 : this.scrollHeight)) + "px";
     });
-    $("#apps_mySyncFlows_save, #apps_mySyncRemotes_save").click(function() {
-        const ONE_HOUR = 60 * 60 * 1000; /* 1 hour */
-        const backup_time = $('#' + $(this).attr('id').slice(0,-5) + '_backuptime').val();
-
-        if (!$('#' + $(this).attr('id').slice(0,-5) + '_backup').is(':checked') && (!backup_time || new Date(backup_time) < new Date(new Date() - ONE_HOUR))) {
-            $("#apps_mySync_backupModal_message").empty();
-            if (backup_time) {
-                $("#apps_mySync_backupModal_message").append("Your last backup has been created on ").append(backup_time);
-            } else {
-                $("#apps_mySync_backupModal_message").append("You don't have a backup yet.");
-            }
-            $("#apps_mySync_backupModal_nobackup").unbind('click');
-            $("#apps_mySync_backupModal_withbackup").unbind('click');
-            if ($(this).attr('id') == "apps_mySyncFlows_save") {
-                $("#apps_mySync_backupModal_nobackup").click(function() {
-                    set_flows_conf()
-                });
-                $("#apps_mySync_backupModal_withbackup").click(function() {
-                    set_flows_conf(force_backup = true)
-                });
-            } else {
-                $("#apps_mySync_backupModal_nobackup").click(function() {
-                    set_remotes_conf()
-                });
-                $("#apps_mySync_backupModal_withbackup").click(function() {
-                    set_remotes_conf(force_backup = true)
-                });
-            }
-            $("#apps_mySync_backupModal").modal('show');
-        } else {
-            if ($(this).attr('id') == "apps_mySyncFlows_save") {
-                set_flows_conf();
-            } else {
-                set_remotes_conf();
-            }
-        }
-    });
     $("#apps_mySyncFlows_restore").click(function() {
-        restore_flows_conf();
+        restore_conf(confType.Flows);
     });
     $("#apps_mySyncRemotes_restore").click(function() {
-        restore_remotes_conf();
+        restore_conf(confType.Remotes);
     });
     $('#apps_mySyncLogs_filter').keypress(function(e) {
         if (e.which == 13) {
@@ -120,29 +170,63 @@ function page_unload() {
     $("#apps_mySyncAbout_button").unbind('click');
     $("#apps_mySyncRemotes_button").unbind('click');
     $("#apps_mySyncFlows_button").unbind('click');
-    $("#apps_mySyncFlows_save, #apps_mySyncRemotes_save").unbind('click');
     $("#apps_mySyncFlows_restore, #apps_mySyncRemotes_restore").unbind('click');
     $("#apps_mySyncFlows_input").unbind('input');
     $("#apps_mySyncLogs_filter").unbind('keypress');
     $("#apps_mySyncLogs_downloadFile_button").unbind('click');
+    $("#apps_mySyncLogs_refresh_button").unbind('click');
     $("#apps_mySyncLogs_deleteFile_button").unbind('click');
     $('#apps_mySyncLogs_currentLogModal').unbind('shown.bs.modal');
     $('#apps_mySyncLogs_currentLogModal').unbind('hidden.bs.modal');
+    $("#apps_mySync_backupModal_nobackup").unbind('click');
+    $("#apps_mySync_backupModal_withbackup").unbind('click');
 }
 
-function get_remotes_conf() {
+function submit_configuration(type) {
+    // Check if backup is recomended
+    const ONE_HOUR = 60 * 60 * 1000; /* 1 hour */
+    const backup_time = $('#' + type.prefix + '_backuptime').val();
+
+    if (!$('#' + type.prefix + '_backup').is(':checked') && (!backup_time || new Date(backup_time) < new Date(new Date() - ONE_HOUR))) {
+        // If yes - display modal
+        $("#apps_mySync_backupModal_message").empty();
+        if (backup_time) {
+            $("#apps_mySync_backupModal_message").append("Your last backup has been created on ").append(backup_time);
+        } else {
+            $("#apps_mySync_backupModal_message").append("You don't have a backup yet.");
+        }
+        $("#apps_mySync_backupModal_nobackup").unbind('click');
+        $("#apps_mySync_backupModal_withbackup").unbind('click');
+        $("#apps_mySync_backupModal_nobackup").click(function() {
+            set_conf(type)
+        });
+        $("#apps_mySync_backupModal_withbackup").click(function() {
+            set_conf(type, force_backup = true)
+        });
+        $("#apps_mySync_backupModal").modal('show');
+    } else {
+        // Otherwise continue without backup notification
+        set_conf(type);
+    }
+}
+
+function get_conf(type) {
     $.post("/apps/mySync/ConfigurationManager.php", {
         action: "get",
-        type: confType.Remotes,
+        type: type.id,
     }, function(data, status) {
         var jsonData = $.parseJSON(data);
 
         if (jsonData && jsonData.status) {
-            $("#apps_mySyncRemotes_info").val(jsonData.data.configuration.join('\n'));
-            $("#apps_mySyncFlows_info").val(jsonData.data.configuration.join('\n'));
+            if (type === confType.Remotes) {
+                $("#apps_mySyncRemotes_info").val(jsonData.data.configuration.join('\n'));
+                $("#apps_mySyncFlows_info").val(jsonData.data.configuration.join('\n'));
+            } else if (type === confType.Flows) {
+                $("#apps_mySyncFlows_input").val(jsonData.data.configuration).trigger("input");
+            }
             if (jsonData.data.hasbackup) {
-                $("#apps_mySyncRemotes_restore").removeClass("gray_out").addClass("button").prop( "disabled", false );
-                $("#apps_mySyncRemotes_backuptime").val(jsonData.data.backuptime);
+                $("#" + type.prefix + "_restore").removeClass("gray_out").addClass("button").prop( "disabled", false );
+                $("#" + type.prefix + "_backuptime").val(jsonData.data.backuptime);
             }
         } else if (jsonData && !jsonData.status) {
             display_notification(jsonData.error.message, errorLevel.Error);
@@ -152,14 +236,21 @@ function get_remotes_conf() {
     });
 }
 
-function set_remotes_conf(force_backup = false) {
+function set_conf(type, force_backup = false) {
     var form_data = new FormData();
-    form_data.append('remotes', $('#apps_mySyncRemotes_input').prop('files')[0]);
+    // Action and configuration type
     form_data.append('action', 'set');
-    form_data.append('type', confType.Remotes);
-    form_data.append('override', ($('input[name="Override"]:checked', '#mySyncRemotes').val() === 'true'));
-    form_data.append('restart', $("#apps_mySyncRemotes_restart").is(':checked'));
-    form_data.append('backup', force_backup || $("#apps_mySyncRemotes_backup").is(':checked'));
+    form_data.append('type', type.id);
+    // Common parameters
+    form_data.append('restart', $("#" + type.prefix + "_restart").is(':checked'));
+    form_data.append('backup', force_backup || $("#" + type.prefix + "_backup").is(':checked'));
+    // Type specific parameters
+    if (type === confType.Remotes) {
+        form_data.append('remotes', $('#apps_mySyncRemotes_input').prop('files')[0]);
+        form_data.append('override', ($('input[name="Override"]:checked', '#mySyncRemotes').val() === 'true'));
+    } else if (type === confType.Flows) {
+        form_data.append('input', $("#apps_mySyncFlows_input").val());
+    }
 
     $.ajax({
         url: '/apps/mySync/ConfigurationManager.php',
@@ -171,7 +262,7 @@ function set_remotes_conf(force_backup = false) {
         type: 'post',
         success: function(data, status) {
             var jsonData = $.parseJSON(data);
-            $("#apps_mySyncRemotes_backup").prop('checked', false);
+            $("#" + type.prefix + "_backup").prop('checked', false);
 
             if (jsonData && jsonData.status) {
                 display_notification('Configuration has been updated.', errorLevel.Info);
@@ -180,19 +271,19 @@ function set_remotes_conf(force_backup = false) {
             } else {
                 display_notification("Operation has failed from unknown reason.", errorLevel.Error);
             }
-            get_remotes_conf();
+            get_conf(type);
         }
     });
 }
 
-function restore_remotes_conf() {
+function restore_conf(type) {
     $.post("/apps/mySync/ConfigurationManager.php", {
         action: "restore",
-        type: confType.Remotes,
-        restart: $("#apps_mySyncRemotes_restart").is(':checked'),
+        type: type.id,
+        restart: $("#" + type.prefix + "_restart").is(':checked'),
     }, function(data, status) {
         var jsonData = $.parseJSON(data);
-        $("#apps_mySyncRemotes_backup").prop('checked', false);
+        $("#" + type.prefix + "_backup").prop('checked', false);
 
         if (jsonData && jsonData.status) {
             display_notification('Configuration has been restored from backup.', errorLevel.Info);
@@ -201,70 +292,7 @@ function restore_remotes_conf() {
         } else {
             display_notification("Operation has failed from unknown reason.", errorLevel.Error);
         }
-        get_remotes_conf();
-    });
-}
-
-function get_flows_conf() {
-    $.post("/apps/mySync/ConfigurationManager.php", {
-        action: "get",
-        type: confType.Flows,
-    }, function(data, status) {
-        var jsonData = $.parseJSON(data);
-
-        if (jsonData && jsonData.status) {
-            $("#apps_mySyncFlows_input").val(jsonData.data.configuration).trigger("input");
-            if (jsonData.data.hasbackup) {
-                $("#apps_mySyncFlows_restore").removeClass("gray_out").addClass("button").prop( "disabled", false );
-                $("#apps_mySyncFlows_backuptime").val(jsonData.data.backuptime);
-            }
-        } else if (jsonData && !jsonData.status) {
-            display_notification(jsonData.error.message, errorLevel.Error);
-        } else {
-            display_notification("Operation has failed from unknown reason.", errorLevel.Error);
-        }
-    });
-}
-
-function set_flows_conf(force_backup = false) {
-    $.post("/apps/mySync/ConfigurationManager.php", {
-        action: "set",
-        type: confType.Flows,
-        input: $("#apps_mySyncFlows_input").val(),
-        restart: $("#apps_mySyncFlows_restart").is(':checked'),
-        backup: force_backup || $("#apps_mySyncFlows_backup").is(':checked'),
-    }, function(data, status) {
-        var jsonData = $.parseJSON(data);
-        $("#apps_mySyncFlows_backup").prop('checked', false);
-
-        if (jsonData && jsonData.status) {
-            display_notification('Configuration has been updated.', errorLevel.Info);
-        } else if (jsonData && !jsonData.status) {
-            display_notification(jsonData.error.message, errorLevel.Error);
-        } else {
-            display_notification("Operation has failed from unknown reason.", errorLevel.Error);
-        }
-        get_flows_conf();
-    });
-}
-
-function restore_flows_conf() {
-    $.post("/apps/mySync/ConfigurationManager.php", {
-        action: "restore",
-        type: confType.Flows,
-        restart: $("#apps_mySyncFlows_restart").is(':checked'),
-    }, function(data, status) {
-        var jsonData = $.parseJSON(data);
-        $("#apps_mySyncFlows_backup").prop('checked', false);
-
-        if (jsonData && jsonData.status) {
-            display_notification('Configuration has been restored from backup.', errorLevel.Info);
-        } else if (jsonData && !jsonData.status) {
-            display_notification(jsonData.error.message, errorLevel.Error);
-        } else {
-            display_notification("Operation has failed from unknown reason.", errorLevel.Error);
-        }
-        get_flows_conf();
+        get_conf(type);
     });
 }
 

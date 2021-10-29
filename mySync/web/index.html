@@ -1,116 +1,118 @@
 <!DOCTYPE html>
-<html>
+<html lang="en-US">
     <head>
-        <meta http-equiv="Content-Type" content="no-cache" />
-        <meta http-equiv="Pragma" content="no-cache" />
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-        <title></title>
+        <title>mySync Configuration GUI</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
         <link rel="stylesheet" href="/apps/mySync/mySync.css">
+        <script>
+            // Add jQuery to allow testing outside of MyCloud
+            if (typeof $ != 'function') {
+                document.write('<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"><\/script>');
+            }
+        </script>
+        <script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/jquery.validate.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+        <script src="/apps/mySync/mySync.js"></script>
     </head>
-    <script type="text/javascript">
-        // Add jQuery to allow testing outside of MyCloud
-        if (typeof $ != 'function') {
-            document.write('<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"><\/script>');
-        }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-    <script src="/apps/mySync/mySync.js"></script>
-
     <body onload="page_load()" onunload="page_unload();">
-        <div class="h1_content header_2"><span class="_text_app" lang="_menu" datafld="mysync_management">mySync Management Panel</span></div>
-        <button type="button" class="field_top" id="apps_mySyncAbout_button"><span class="_text_app" lang="_about" datafld="goto_about">About</span></button>
-        <button type="button" class="field_top" id="apps_mySyncRemotes_button"><span class="_text_app" lang="_remotes" datafld="goto_remotes">Remote Connections</span></button>
-        <button type="button" class="field_top" id="apps_mySyncFlows_button"><span class="_text_app" lang="_flows" datafld="goto_flows">Backup Flows</span></button>
-        <button type="button" class="field_top" id="apps_mySyncLogs_button" data-bs-toggle="modal" data-bs-target="#apps_mySyncLogs_currentLogModal"><span class="_text_app" lang="_logs" datafld="goto_logs">Logs</span></button>
+        <div class="h1_content header_2"><span class="_text_app">mySync Management Panel</span></div>
+        <button type="button" class="field_top" id="apps_mySyncAbout_button"><span class="_text_app">About</span></button>
+        <button type="button" class="field_top" id="apps_mySyncRemotes_button"><span class="_text_app">Remote Connections</span></button>
+        <button type="button" class="field_top" id="apps_mySyncFlows_button"><span class="_text_app">Backup Flows</span></button>
+        <button type="button" class="field_top" id="apps_mySyncLogs_button" data-bs-toggle="modal" data-bs-target="#apps_mySyncLogs_currentLogModal"><span class="_text_app">Logs</span></button>
         <div class="hr_0_content">
             <div class="hr_1"></div>
         </div>
         <div id="apps_mySync_notifications_loc1"><div id="apps_mySync_notifications"></div></div>
         <div id="mySyncAbout" class="_text_app">
-            <span class="_text_app" lang="_about" datafld="about">
+            <div class="_text_app">
                 <p>mySync is a WD myCloud Addon for automatic synchronization with Cloud Storage (using rclone).</p>
                 <p>You might use mySync to periodically sync selected directories or backup whole NAS to other cloud storage of your choice.</p>
                 <p>Please refer to the <a href="https://github.com/Czuz/mySync-for-myCloud-OS5">Project</a> homepage for additional details.</p>
-            </span>
-            <span class="_txt_app" lang="_about" dataflg="credits">
+            </div>
+            <div class="_text_app">
                 <p class="h1_content header_2">Credits</p>
                 <ul>
                     <li><a href="https://github.com/rclone/rclone/blob/master/COPYING">rclone</a> - Copyright (C) 2012 by Nick Craig-Wood http://www.craig-wood.com/nick/</li>
                     <li><a href="https://github.com/twbs/bootstrap/blob/main/LICENSE">bootstrap</a> - Copyright (c) 2011 Twitter, Inc., Copyright (c) 2011 The Bootstrap Authors</li>
                 </ul>
-            </span>
+            </div>
         </div>
         <div id="mySyncRemotes" class="_text_app" style="display:none;">
-            <form>
+            <form id="apps_mySyncRemotes_form" class="form-horizontal">
                 <div class="form-group">
-                    <label for="apps_mySyncRemotes_input">Upload rclone.conf:</label><br />
-                    <input type="file" class="form-control-file" id="apps_mySyncRemotes_input"><br />
-                    <small id="apps_mySyncFlows_inputHelp" class="form-text text-muted">Please find the instructions <a href="https://github.com/Czuz/mySync-for-myCloud-OS5#mysyncetcrcloneconf">here</a>.</small>
+                    <label class="form-label" for="apps_mySyncRemotes_input">Upload rclone.conf:</label>
+                    <input class="form-control" type="file" id="apps_mySyncRemotes_input" name="apps_mySyncRemotes_input" />
+                    <small id="apps_mySyncRemotes_inputHelp" class="form-text text-muted">Please find the instructions <a href="https://github.com/Czuz/mySync-for-myCloud-OS5#mysyncetcrcloneconf">here</a>.</small>
                 </div>
                 <div class="form-group">
-                    <label for="apps_mySyncRemotes_info">Existing connections:</label>
+                    <label class="form-label" for="apps_mySyncRemotes_info">Existing connections:</label>
                     <textarea class="form-control" id="apps_mySyncRemotes_info" rows="2" placeholder="" readonly></textarea>
                 </div>
-                <div class="custom-control custom-radio">
-                    <input type="radio" id="apps_mySyncRemotes_reuse" name="Override" class="custom-control-input" value="false"  checked>
-                    <label class="custom-control-label" for="apps_mySyncRemotes_reuse">Update existing remote connections and append new ones</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" id="apps_mySyncRemotes_reuse" name="Override" value="false"  checked />
+                    <label class="form-check-label" for="apps_mySyncRemotes_reuse">
+                        Update existing remote connections and append new ones
+                    </label>
                 </div>
-                <div class="custom-control custom-radio">
-                    <input type="radio" id="apps_mySyncRemotes_replace" name="Override" class="custom-control-input" value="true">
-                    <label class="custom-control-label" for="apps_mySyncRemotes_replace">Remove all existing remote connections and replace with provided file</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" id="apps_mySyncRemotes_replace" name="Override" value="true" />
+                    <label class="form-check-label" for="apps_mySyncRemotes_replace">
+                        Remove all existing remote connections and replace with provided file
+                    </label>
                 </div>
-                <div class="form-check" data-bs-toggle="tooltip" data-bs-placement="top" title="Function not available yet">
-                    <input class="form-check-input" type="checkbox" value="" id="apps_mySyncRemotes_restart" disabled>
+                <div class="form-check" title="Function not available yet">
+                    <input class="form-check-input" type="checkbox" value="" id="apps_mySyncRemotes_restart" disabled />
                     <label class="form-check-label" for="apps_mySyncRemotes_restart">
                         Restart to apply new configuration immediately
                     </label>
                 </div>
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="" id="apps_mySyncRemotes_backup">
+                    <input class="form-check-input" type="checkbox" value="" id="apps_mySyncRemotes_backup" />
                     <label class="form-check-label" for="apps_mySyncRemotes_backup">
                         Backup existing configuration. Previous backup will be overrided.
                     </label>
                 </div>
                 <div class="form-check">
-                    <input class="form-control-plaintext" type="text" id="apps_mySyncRemotes_backuptime" value="" readonly hidden>
+                    <input class="form-control-plaintext" type="text" id="apps_mySyncRemotes_backuptime" value="" readonly hidden />
                 </div>
                 <button type="button" class="gray_out" id="apps_mySyncRemotes_restore" disabled>Restore</button>
-                <button type="button" class="button" id="apps_mySyncRemotes_save">Save</button>
+                <button type="submit" class="button" id="apps_mySyncRemotes_save">Save</button>
             </form>
         </div>
         <div id="mySyncFlows" class="_text_app" style="display:none;">
-        <form>
+            <form id="apps_mySyncFlows_form" class="form-horizontal">
                 <div class="form-group">
-                    <label for="apps_mySyncFlows_input">Edit flow definitions:</label>
-                    <textarea class="form-control" id="apps_mySyncFlows_input" rows="3" placeholder=""></textarea>
+                    <label class="form-label" for="apps_mySyncFlows_input">Edit flow definitions:</label>
+                    <textarea class="form-control" id="apps_mySyncFlows_input" name="apps_mySyncFlows_input" rows="3" placeholder=""></textarea>
                     <small id="apps_mySyncFlows_inputHelp" class="form-text text-muted">Please find the instructions <a href="https://github.com/Czuz/mySync-for-myCloud-OS5#mysyncetcrclone_job_defconf">here</a>.</small>
                 </div>
                 <div class="form-group">
-                    <label for="apps_mySyncFlows_info">Existing connections:</label>
+                    <label class="form-label" for="apps_mySyncFlows_info">Existing connections:</label>
                     <textarea class="form-control" id="apps_mySyncFlows_info" rows="2" placeholder="" readonly></textarea>
                 </div>
-                <div class="form-check" data-bs-toggle="tooltip" data-bs-placement="top" title="Function not available yet">
-                    <input class="form-check-input" type="checkbox" value="" id="apps_mySyncFlows_restart" disabled>
+                <div class="form-check" title="Function not available yet">
+                    <input class="form-check-input" type="checkbox" value="" id="apps_mySyncFlows_restart" disabled />
                     <label class="form-check-label" for="apps_mySyncFlows_restart">
                         Restart to apply new configuration immediately
                     </label>
                 </div>
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="" id="apps_mySyncFlows_backup">
+                    <input class="form-check-input" type="checkbox" value="" id="apps_mySyncFlows_backup" />
                     <label class="form-check-label" for="apps_mySyncFlows_backup">
                         Backup existing configuration. Previous backup will be overrided.
                     </label>
                 </div>
                 <div class="form-check">
-                    <input class="form-control-plaintext" type="text" id="apps_mySyncFlows_backuptime" value="" readonly hidden>
+                    <input class="form-control-plaintext" type="text" id="apps_mySyncFlows_backuptime" value="" readonly hidden />
                 </div>
                 <button type="button" class="gray_out" id="apps_mySyncFlows_restore" disabled>Restore</button>
-                <button type="button" class="button" id="apps_mySyncFlows_save">Save</button>
+                <button type="submit" class="button" id="apps_mySyncFlows_save">Save</button>
             </form>
         </div>
-        <div class="modal fade" data-bs-keyboard="true" id="apps_mySyncLogs_currentLogModal" role="dialog">
+        <div class="modal fade _text_app" id="apps_mySyncLogs_currentLogModal" role="dialog" data-bs-keyboard="true">
             <div class="modal-dialog modal-fullscreen" role="dialog">
                 <div class="modal-content">
                     <div id="mySyncLogs" class="modal-body">
@@ -120,12 +122,12 @@
                             <table style="table-layout: fixed; width: 100%; height: 100%;">
                                 <tr>
                                     <td style="width: 214px;">
-                                        <input type="text" id="apps_mySyncLogs_filter" placeholder="Search logs...">
+                                        <input type="text" id="apps_mySyncLogs_filter" placeholder="Search logs..." />
                                     </td>
                                     <td style="width: 100%; text-align:right;">
-                                        <button type="button" class="button" id="apps_mySyncLogs_refresh_button" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
-                                        <button type="button" class="button" id="apps_mySyncLogs_downloadFile_button" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Download selected"><i class="bi bi-download"></i></button>
-                                        <button type="button" class="button d-none" id="apps_mySyncLogs_deleteFile_button" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete selected"><i class="bi bi-trash"></i></button>
+                                        <button type="button" class="button" id="apps_mySyncLogs_refresh_button" title="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
+                                        <button type="button" class="button" id="apps_mySyncLogs_downloadFile_button" title="Download selected"><i class="bi bi-download"></i></button>
+                                        <button type="button" class="button d-none" id="apps_mySyncLogs_deleteFile_button" title="Delete selected"><i class="bi bi-trash"></i></button>
                                     </td>
                                 </tr>
                                 <tr style="height: 100%;">
@@ -150,7 +152,7 @@
                 </div>
             </div>
         </div>
-        <div class="modal fade" id="apps_mySync_backupModal" role="dialog">
+        <div class="modal fade _text_app" id="apps_mySync_backupModal" role="dialog">
             <div class="modal-dialog" role="dialog">
                 <div class="modal-content">
                     <div class="modal-header">

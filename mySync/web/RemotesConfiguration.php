@@ -13,9 +13,10 @@ class RemotesConfiguration {
         $conf = file_get_contents($file);
         $conf_array = preg_split("#^(\[[\w\d]+\])$#mu",$conf, 0, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
         while (count($conf_array)) {
-            $key = array_shift($conf_array);
-            $value = $key . array_shift($conf_array);
-            $this->remotes[trim($key,'[]')] = $value;
+            $name = array_shift($conf_array);
+            $definition = $name . array_shift($conf_array);
+            $key = trim($name,'[]') . ' (' . current(preg_filter("#type = (.+)#mu","$1",preg_grep("#^type#mu",explode(PHP_EOL,$definition)))) . ')';
+            $this->remotes[$key] = $definition;
         }
     }
 

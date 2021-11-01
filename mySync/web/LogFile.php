@@ -6,7 +6,7 @@
  * - cacheing
  */
 
-namespace LogViewer;
+namespace mySync;
 
 class LogFile {
 

@@ -33,7 +33,7 @@ class LogViewer {
     private const API_CMD_LIST = "list";
     private const API_CMD_VIEW = "view";
     private const API_CMD_GET = "get";
-    private const API_CMD_DEL = "del";
+    private const API_CMD_DELETE = "delete";
 
     public function __construct() {
         $this->init();
@@ -96,7 +96,7 @@ class LogViewer {
                 }
             }
         }
-        else if($command === self::API_CMD_DEL) {
+        else if($command === self::API_CMD_DELETE) {
             $file = basename(filter_var($this->getInput(self::API_FILE_QUERY_PARAM),FILTER_SANITIZE_STRING));
 
             if(empty($file)) {
@@ -216,3 +216,4 @@ class LogViewer {
         return empty($value) ? null : $value;
     }
 }
+?>

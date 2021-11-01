@@ -1,19 +1,19 @@
 Package:            mySync
 Section:            Apps
-Version:            0.9.2
+Version:            0.9.5
 Packager:           Czuz
 Email:
 Homepage:           https://github.com/Czuz/mySync-for-myCloud-OS5
-Description:        Personal App for automatic synchronization with Cloud Storage (using rcloud).
+Description:        Personal App for automatic synchronization with Cloud Storage (using rclone).
 Icon:               mySync.png
 AddonShowName:      mySync
-AddonIndexPage:     index.php
+AddonIndexPage:     index.html
 AddonUsedPort:
 InstDepend:
 InstConflict:
 StartDepend:
 StartConflict:
 CenterType:         1
-UserControl:        1
+UserControl:
 MinFWVer:           5.0.0
 MaxFWVer:

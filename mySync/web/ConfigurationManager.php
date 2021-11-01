@@ -19,6 +19,9 @@ class ConfigurationManager {
     //this is the path (folder) on the system where the configuration files are stored
     private $confFolderPath;
 
+    //this is the path (folder) on the system where the startup scripts are stored
+    private $appFolderPath;
+
     //this are the configuration files managed by this class
     private $confFiles;
 
@@ -294,12 +297,8 @@ class ConfigurationManager {
      * @throws Exception with error message
      */
     private function restart() {
-        $continue = true;
-        $result = "";
-
-        // TODO
-
-        if (!empty($result)) throw new Exception($result);
+        $dir = $this->appFolderPath;
+        shell_exec("cd " . $dir . " && ./stop.sh && ./start.sh .");
     }
 
     /**
@@ -353,6 +352,7 @@ class ConfigurationManager {
     private function init() {
         //configure the configuration folder path
         $this->confFolderPath = "/mnt/HD/HD_a2/.systemfile/mySync/etc"; //TODO
+        $this->appFolderPath = "/mnt/HD/HD_a2/Nas_Prog/mySync";
         $this->confFiles = array( 1 => "rclone.conf", 2 => "rclone_job_def.conf" );
 
         //concatenate to form Full Log Path

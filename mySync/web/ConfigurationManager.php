@@ -2,14 +2,17 @@
 /**
  * Author: Czuz (https://github.com/Czuz)
  */
-namespace ConfigurationManager;
+namespace mySync;
 
 include_once("RemotesConfiguration.php");
+include_once("AuthChecker.php");
 use Exception;
 
 try {
-    $configurationManager = new ConfigurationManager;
-    exit($configurationManager->processAPIRequest());
+    if (AuthChecker::isProtected()) {
+        $configurationManager = new ConfigurationManager;
+        exit($configurationManager->processAPIRequest());
+    }
 } catch (\Throwable $th) {
     exit($th);
 }

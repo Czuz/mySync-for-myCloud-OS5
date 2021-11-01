@@ -3,7 +3,7 @@
  * Author: Czuz (https://github.com/Czuz)
  */
 
-namespace ConfigurationManager;
+namespace mySync;
 
 class RemotesConfiguration {
     // Array of remote connections

@@ -2,13 +2,16 @@
 /**
  * Author: Czuz (https://github.com/Czuz)
  */
-namespace LogViewer;
+namespace mySync;
 
 include_once("LogFile.php");
+include_once("AuthChecker.php");
 
 try {
-    $logViewer = new LogViewer;
-    exit($logViewer->processAPIRequest());
+    if (AuthChecker::isProtected()) {
+        $logViewer = new LogViewer;
+        exit($logViewer->processAPIRequest());
+        }
 } catch (\Throwable $th) {
     exit($th);
 }

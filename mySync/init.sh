@@ -17,6 +17,14 @@ ln -s ${path}/web /var/www/apps/mySync
 mkdir -p ${volume:-/tmp}/.systemfile/mySync/log
 mkdir -p ${volume:-/tmp}/.systemfile/mySync/etc
 
-# TODO: parametrization through web - currently rclone.conf must be included in installation package
-ln -s ${path}/etc/rclone.conf ${volume:-/tmp}/.systemfile/mySync/etc/rclone.conf
-ln -s ${path}/etc/rclone_job_def.conf ${volume:-/tmp}/.systemfile/mySync/etc/rclone_job_def.conf
+# Clean symlinks (if previous version has been used)
+if [ -L ${volume:-/tmp}/.systemfile/mySync/etc/rclone.conf ]; then
+    rm ${volume:-/tmp}/.systemfile/mySync/etc/rclone.conf
+fi
+if [ -L ${volume:-/tmp}/.systemfile/mySync/etc/rclone_job_def.conf ]; then
+    rm ${volume:-/tmp}/.systemfile/mySync/etc/rclone_job_def.conf
+fi
+
+# Parametrization is managed through Web GUI
+touch ${volume:-/tmp}/.systemfile/mySync/etc/rclone.conf
+touch ${volume:-/tmp}/.systemfile/mySync/etc/rclone_job_def.conf

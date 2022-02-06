@@ -17,6 +17,12 @@ var confType = {
 
 // Validator
 function init_validation() {
+    if (typeof $.validator == "undefined") {
+        console.log("[mySync] waiting for $.validator...");
+        setTimeout(init_validation, 500);
+        return false;
+    }
+
     $.validator.setDefaults({
         errorElement: "div",
         errorPlacement: function (error, element) {

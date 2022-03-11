@@ -234,7 +234,7 @@ class ConfigurationManager {
 
         try {
             if ($continue) {
-                if (!file_put_contents($file, $input)) {
+                if (!file_put_contents($file, preg_replace('~\R~u', "\n", $input))) {
                     $continue = false;
                     $result = "Error while saving a file [" . $file . "]";
                 }

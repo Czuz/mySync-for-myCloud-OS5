@@ -1,3 +1,4 @@
 apkg.sign
 apkg.xml
 mySync/bin/rclone
+.vscode

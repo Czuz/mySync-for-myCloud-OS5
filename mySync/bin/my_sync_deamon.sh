@@ -68,7 +68,7 @@ echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Initialize Standard Variables (BEGIN)
 if [ ${RC} -ne 0 ] ; then
   echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Unable to create ${LOG_FILE}, please check permissions"              | tee -a ${LOG_FILE}
   echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Initialize Standard Variables (FAILED)"                              | tee -a ${LOG_FILE}
-  # TODO sendAlert.sh 1400 mySync
+  fireAlert -a 1400 -p mySync -f
   exit 1
 fi
 echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Script ${INIT_EXE} is being executed by `whoami` on `date`"            | tee -a ${LOG_FILE}
@@ -79,7 +79,7 @@ echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : rclone Log File   : ${LOG_RCLL}"     
 if [ ${CONF_DIR:-none} = none ] ; then
   echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Variable CONF_DIR not set - unable to continue"                      | tee -a ${LOG_FILE}
   echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Initialize Standard Variables (FAILED)"                              | tee -a ${LOG_FILE}
-  # TODO sendAlert.sh 1400 mySync
+  fireAlert -a 1400 -p mySync -f
   exit 2
 fi
 
@@ -104,7 +104,7 @@ case ${#} in
      ;;
   *) echo "`date +%Y-%m-%d\ %H:%M:%S` STEP010 : Incorrect number of parameters"                                   | tee -a ${LOG_FILE}
      echo "`date +%Y-%m-%d\ %H:%M:%S` STEP010 : Usage : ${INIT_EXE} [SLEEP_TIME]"                                 | tee -a ${LOG_FILE}
-     # TODO sendAlert.sh 1400 mySync
+     fireAlert -a 1400 -p mySync -f
      exit 3
      ;;
 esac
@@ -125,7 +125,7 @@ echo "`date +%Y-%m-%d\ %H:%M:%S` STEP020 : Check synchronization configuration (
 if [ ! -r ${CONF_FILE} ] ; then
   echo "`date +%Y-%m-%d\ %H:%M:%S` STEP020 : File ${CONF_FILE} does not exist or is not readable"                 | tee -a ${LOG_FILE}
   echo "`date +%Y-%m-%d\ %H:%M:%S` STEP020 : Check synchronization configuration (FAILED)"                        | tee -a ${LOG_FILE}
-  # TODO sendAlert.sh 1400 mySync
+  fireAlert -a 1400 -p mySync -f
   exit 4
 fi
 
@@ -183,14 +183,14 @@ if [ ${INVALID_JOB_NO} -gt 0 ] ; then
   echo "`date +%Y-%m-%d\ %H:%M:%S` STEP020 : Invalid definitions:"                                                | tee -a ${LOG_FILE}
   for j in ${!INVALID_JOB_LIST[@]}; do echo ${INVALID_JOB_LIST[$j]}; done | \
   sed "s/^/`date +%Y-%m-%d\ %H:%M:%S` STEP020 : * /"                                                              | tee -a ${LOG_FILE}
-  # TODO sendAlert.sh 1400 mySync
+  fireAlert -a 1400 -p mySync -f
 fi
 
 
 if [ ${VALID_JOB_NO} -eq 0 ] ; then
   echo "`date +%Y-%m-%d\ %H:%M:%S` STEP020 : File ${CONF_FILE} does not contain valid definitions"                | tee -a ${LOG_FILE}
   echo "`date +%Y-%m-%d\ %H:%M:%S` STEP020 : Check synchronization configuration (FAILED)"                        | tee -a ${LOG_FILE}
-  # TODO sendAlert.sh 1400 mySync
+  fireAlert -a 1400 -p mySync -f
   exit 5
 fi
 
@@ -231,7 +231,7 @@ do
 
         if [ ${RC} -ne 0 ] ; then
           echo "`date +%Y-%m-%d\ %H:%M:%S` STEP030 : Execute synchronization jobs (FAILED)"                       | tee -a ${LOG_FILE}
-          # TODO sendAlert.sh 1400 mySync
+          fireAlert -a 1400 -p mySync -f
           EXIT_CODE=6
           break
         fi

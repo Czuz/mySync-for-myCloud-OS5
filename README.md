@@ -84,12 +84,23 @@ By default following options are used:
 
 Save the configuration and restart the service.
 
+## How to setup notifications
+In the MyCloud Administration Console select `Settings -> Notifications`.
+
+Configure according to your preferences. mySync failures will be reported as a following *Warning*:
+> Remote Backup Error
+> An error occurred for the remote backup job named mySync. Please check the backup job detail.
+> Code: 1400
+
 ## Troubleshooting
 In the MyCloud Administration Console select `Apps menu -> mySync -> Configure -> Logs`.
 
 By default logs are kept here: /mnt/HD/HD_a2/.systemfile/mySync/log
 
 ## Changes
+\[2022-11-20\] - v1.1.0
+- Integration with notification services of MyCloud
+
 \[2021-11-01\] - v1.0.0
 - mySync job to perform regular backups
 - Web GUI for mySync administration:
@@ -107,5 +118,5 @@ By default logs are kept here: /mnt/HD/HD_a2/.systemfile/mySync/log
 - [x] Automatically restarts after NAS restart
 - [x] Online log browsing in MyCloud Administration Console
 - [x] Online configuration in MyCloud Administration Console
-- [ ] Integration with notification services of MyCloud
+- [x] Integration with notification services of MyCloud
 - [ ] Log retention

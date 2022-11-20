@@ -89,7 +89,9 @@ In the MyCloud Administration Console select `Settings -> Notifications`.
 
 Configure according to your preferences. mySync failures will be reported as a following *Warning*:
 > Remote Backup Error
+>
 > An error occurred for the remote backup job named mySync. Please check the backup job detail.
+>
 > Code: 1400
 
 ## Troubleshooting

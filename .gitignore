@@ -1,4 +1,7 @@
 apkg.sign
 apkg.xml
 mySync/bin/rclone
+mySync/etc
+mySync/log
 .vscode
+!**/.gitkeep

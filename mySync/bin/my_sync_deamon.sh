@@ -32,6 +32,8 @@
 # Date        Programmer          Description                              #
 # ----------- ------------------- ---------------------------------------- #
 # 24-Oct-2020 Czuz                Initial Version                          #
+# 20-Nov-2022 Czuz                Integration with notification service    #
+# 24-Feb-2025 Czuz                Log rotation                             #
 ############################################################################
 # STEP001 -- Initialize Standard Variables                                 #
 ############################################################################
@@ -48,33 +50,42 @@ INIT_PGM=`basename ${INIT_EXE}`
 INIT_DIR=`dirname ${INIT_EXE}`
 INIT_VER="1.0"
 
-LOG_DATE=`date +%Y%m%d%H%M%S`
-LOG_FILE_NAME=${INIT_PGM}.${LOG_DATE}.${INIT_PID}
+loginit () {
+  LOG_DATE=`date +%Y%m%d%H%M%S`
+  LOG_FILE_NAME=${INIT_PGM}.${LOG_DATE}.${INIT_PID}
 
-LOG_FILE=${LOG_DIR}/${LOG_FILE_NAME}.log
-LOG_RCLL=${LOG_DIR}/${LOG_FILE_NAME}.rclone.log
+  LOG_FILE=${LOG_DIR}/${LOG_FILE_NAME}.log
+  LOG_RCLL=${LOG_DIR}/${LOG_FILE_NAME}.rclone.log
+
+  touch ${LOG_FILE}
+  RC=${?}
+
+  if [ ${1:0:5} == "START" ] ; then
+    echo "`date +%Y-%m-%d\ %H:%M:%S` START   : ${INIT_EXE}"                                                       | tee -a ${LOG_FILE}
+  else
+    echo "`date +%Y-%m-%d\ %H:%M:%S` LOGINIT : continue ${INIT_EXE}"                                              | tee -a ${LOG_FILE}
+  fi
+
+  if [ ${RC} -ne 0 ] ; then
+    echo "`date +%Y-%m-%d\ %H:%M:%S` LOGINIT : Unable to create ${LOG_FILE}, please check permissions"            | tee -a ${LOG_FILE}
+    echo "`date +%Y-%m-%d\ %H:%M:%S` $1 (FAILED)"                                                                 | tee -a ${LOG_FILE}
+    fireAlert -a 1400 -p mySync -f
+    exit 1
+  fi
+
+  echo "`date +%Y-%m-%d\ %H:%M:%S` LOGINIT : Main LOG File     : ${LOG_FILE}"                                     | tee -a ${LOG_FILE}
+  echo "`date +%Y-%m-%d\ %H:%M:%S` LOGINIT : rclone Log File   : ${LOG_RCLL}"                                     | tee -a ${LOG_FILE}
+}
+
 CONF_FILE=${CONF_DIR}/rclone_job_def.conf
 
 EXIT_CODE=0
 HUP=0
 trap "HUP=1; echo \"`date +%Y-%m-%d\ %H:%M:%S` SIGHUP  : Termination signal\" | tee -a ${LOG_FILE}; pkill -P $$" SIGINT SIGHUP
 
-touch ${LOG_FILE} 
-RC=${?}
-
-echo "`date +%Y-%m-%d\ %H:%M:%S` START   : ${INIT_EXE}"                                                           | tee -a ${LOG_FILE}
+loginit "START   :"
 echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Initialize Standard Variables (BEGIN)"                                 | tee -a ${LOG_FILE}
-
-if [ ${RC} -ne 0 ] ; then
-  echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Unable to create ${LOG_FILE}, please check permissions"              | tee -a ${LOG_FILE}
-  echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Initialize Standard Variables (FAILED)"                              | tee -a ${LOG_FILE}
-  fireAlert -a 1400 -p mySync -f
-  exit 1
-fi
 echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Script ${INIT_EXE} is being executed by `whoami` on `date`"            | tee -a ${LOG_FILE}
-
-echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Main LOG File     : ${LOG_FILE}"                                       | tee -a ${LOG_FILE}
-echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : rclone Log File   : ${LOG_RCLL}"                                       | tee -a ${LOG_FILE}
 
 if [ ${CONF_DIR:-none} = none ] ; then
   echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Variable CONF_DIR not set - unable to continue"                      | tee -a ${LOG_FILE}
@@ -206,6 +217,11 @@ while [ ${EXIT_CODE} -eq 0 ] && [ ${HUP} -eq 0 ]
 do
   if [ ${HUP} -eq 0 ] ; then
     sleep $IN_SLEEP_TIME &
+
+    if [ ${LOG_DATE:0:8} != $(date +%Y%m%d) ] ; then
+      echo "`date +%Y-%m-%d\ %H:%M:%S` LOGINIT : rotating logs"                                                  | tee -a ${LOG_FILE}
+      loginit "STEP030 : Execute synchronization jobs"
+    fi
 
     for ((i=1;i<=$TOTAL_JOB_NO;i++)); do
       if [ ${sync_jobs[$i,has_error]} -eq 0 ]; then

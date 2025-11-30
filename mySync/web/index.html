@@ -19,6 +19,7 @@
     <body onload="page_load()" onunload="page_unload();">
         <div class="h1_content header_2"><span class="_text_app">mySync Management Panel</span></div>
         <button type="button" class="field_top" id="apps_mySyncAbout_button"><span class="_text_app">About</span></button>
+        <button type="button" class="field_top" id="apps_mySyncSettings_button"><span class="_text_app">Settings</span></button>
         <button type="button" class="field_top" id="apps_mySyncRemotes_button"><span class="_text_app">Remote Connections</span></button>
         <button type="button" class="field_top" id="apps_mySyncFlows_button"><span class="_text_app">Backup Flows</span></button>
         <button type="button" class="field_top" id="apps_mySyncLogs_button" data-bs-toggle="modal" data-bs-target="#apps_mySyncLogs_currentLogModal"><span class="_text_app">Logs</span></button>
@@ -40,6 +41,39 @@
                     <li><a href="https://github.com/jquery-validation/jquery-validation/blob/master/LICENSE.md" target="_blank">jQuery Validation Plugin</a> - Copyright Jörn Zaefferer</li>
                 </ul>
             </div>
+        </div>
+        <div id="mySyncSettings" class="_text_app" style="display:none;">
+            <form id="apps_mySyncSettings_form" class="form-horizontal">
+                <div class="form-group">
+                    <label class="form-label" for="apps_mySyncSettings_sleeptime">Sleep time (minutes)
+                        <span class="TooltipIcon" id="tip_sleeptime" title="Time in minutes between synchronizations." rel="Time in minutes between synchronizations."></span>
+                    </label>
+                    <input class="form-control" type="number" id="apps_mySyncSettings_sleeptime" name="apps_mySyncSettings_sleeptime" min="1" placeholder="60" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="apps_mySyncSettings_logretention">Log retention period (days)
+                        <span class="TooltipIcon" id="tip_logretention" title="How many days logs will be stored. Type '-1' for unlimited retention." rel="How many days logs will be stored. Type '-1' for unlimited retention."></span>
+                    </label>
+                    <input class="form-control" type="number" id="apps_mySyncSettings_logretention" name="apps_mySyncSettings_logretention" min="-1" placeholder="-1" />
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="apps_mySyncSettings_restart" name="apps_mySyncSettings_restart"/>
+                    <label class="form-check-label" for="apps_mySyncSettings_restart">
+                        Restart to apply new configuration immediately
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="apps_mySyncSettings_backup" name="apps_mySyncSettings_backup"/>
+                    <label class="form-check-label" for="apps_mySyncSettings_backup">
+                        Backup existing configuration. Previous backup will be overrided.
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-control-plaintext" type="text" id="apps_mySyncSettings_backuptime" value="" readonly hidden />
+                </div>
+                <button type="button" class="gray_out" id="apps_mySyncSettings_restore" disabled>Restore</button>
+                <button type="submit" class="button" id="apps_mySyncSettings_save">Save</button>
+            </form>
         </div>
         <div id="mySyncRemotes" class="_text_app" style="display:none;">
             <form id="apps_mySyncRemotes_form" class="form-horizontal">

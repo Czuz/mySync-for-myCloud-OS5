@@ -33,6 +33,7 @@ class ConfigurationManager {
     private $fullBakFilePath;
 
     // these are the constants for the API_CONF_TYPE_PARAM
+    private const CONF_TYPE_SETTINGS = 0;
     private const CONF_TYPE_REMOTES = 1;
     private const CONF_TYPE_FLOWS = 2;
 
@@ -45,6 +46,8 @@ class ConfigurationManager {
     private const API_CONF_RESTART_PARAM = "restart";
     private const API_CONF_BACKUP_PARAM = "backup";
     private const API_CONF_INPUT_PARAM = "input";
+    private const API_CONF_SLEEPTIME_PARAM = "sleeptime";
+    private const API_CONF_LOGRETENTION_PARAM = "logretention";
     private const API_CMD_GET = "get";
     private const API_CMD_SET = "set";
     private const API_CMD_RESTORE = "restore";
@@ -63,14 +66,19 @@ class ConfigurationManager {
         $command = $this->getInput("action");
         $confType = $this->getInput(self::API_CONF_TYPE_PARAM);
 
-        if($command === self::API_CMD_GET) {
+        if(!array_key_exists($confType, $this->fullConfFilePath)) {
+            $response["status"] = false;
+            $response["error"]["message"] = "Unsupported Configuration Type [" . $confType . "]";
+            $response["error"]["code"] = 501;
+        }
+        else if($command === self::API_CMD_GET) {
             if(array_key_exists($confType, $this->fullConfFilePath)) {
                 $response["status"] = true;
                 $response["data"] = $this->getConf($confType);
             } else {
                 $response["status"] = false;
-                $response["error"]["message"] = "Unsupported Configuration Type [" . $confType . "]";
-                $response["error"]["code"] = 501;
+                $response["error"]["message"] = "Internal Server Error";
+                $response["error"]["code"] = 500;
             }
         }
         else if($command === self::API_CMD_SET) {
@@ -85,7 +93,27 @@ class ConfigurationManager {
                 if ($backup) $this->makeBackup($confType);
 
                 // Save new configuration
-                if ($confType == $this::CONF_TYPE_REMOTES) {
+                if ($confType == $this::CONF_TYPE_SETTINGS) {
+                    $sleeptime = intval($this->getInput($this::API_CONF_SLEEPTIME_PARAM));
+                    $logretention = intval($this->getInput($this::API_CONF_LOGRETENTION_PARAM));
+
+                    // Validate inputs
+                    if (!is_int($sleeptime) || $sleeptime < 60) {
+                        $response["status"] = false;
+                        $response["error"]["message"] = "Incorrect value of SLEEP_TIME [" . $sleeptime . "]";
+                        $response["error"]["code"] = 400;
+                    } else if (!is_int($logretention) || $logretention < -1) {
+                        $response["status"] = false;
+                        $response["error"]["message"] = "Incorrect value of LOG_RETENTION [" . $logretention . "]";
+                        $response["error"]["code"] = 400;
+                    } else {
+                        $input = "";
+                        foreach (array("SLEEP_TIME" => $sleeptime, "LOG_RETENTION" => $logretention) as $k => $v)
+                            $input .= "$k=$v" . PHP_EOL;
+
+                        $this->saveSettings($input);
+                    }
+                } else if ($confType == $this::CONF_TYPE_REMOTES) {
                     // Validate inputs
                     if (!count($_FILES)) {
                         $response["status"] = false;
@@ -99,7 +127,7 @@ class ConfigurationManager {
                         $override = filter_var($this->getInput($this::API_CONF_OVERRIDE_PARAM), FILTER_VALIDATE_BOOLEAN);
                         $this->saveRemotes($_FILES['remotes'], $override);
                     }
-                } else {
+                } else if ($confType == $this::CONF_TYPE_FLOWS) {
                     $input = strval($this->getInput($this::API_CONF_INPUT_PARAM));
 
                     // Validate inputs
@@ -110,6 +138,10 @@ class ConfigurationManager {
                     } else {
                         $this->saveFlows($input);
                     }
+                } else {
+                    $response["status"] = false;
+                    $response["error"]["message"] = "Internal Server Error";
+                    $response["error"]["code"] = 500;
                 }
 
                 // Restart
@@ -142,7 +174,7 @@ class ConfigurationManager {
         else {
             $response["status"] = false;
             $response["error"]["message"] = "Unsupported Query Command [" . $command . "]";
-            $response["error"]["code"] = 405;
+            $response["error"]["code"] = 404;
         }
 
         return json_encode($response);
@@ -163,7 +195,9 @@ class ConfigurationManager {
         $backup = false;
         $backup_time = null;
 
-        if ($type == self::CONF_TYPE_REMOTES) {
+        if ($type == self::CONF_TYPE_SETTINGS) {
+            $conf = parse_ini_file($file);
+        } else if ($type == self::CONF_TYPE_REMOTES) {
             $conf = (new RemotesConfiguration($file))->keys();
         } else if ($type == self::CONF_TYPE_FLOWS) {
             $conf = file_get_contents($file);
@@ -205,6 +239,38 @@ class ConfigurationManager {
                 if (!copy($file,$bak_file)) {
                     $continue = false;
                     $result = "Backup error [from: " . $file . ", to: " . $bak_file . "]";
+                }
+            }
+        } catch(Exception $e) {
+            $continue = false;
+            $result = $e->getMessage();
+        }
+
+        if (!empty($result)) throw new Exception($result);
+    }
+
+        /**
+     * Method to save Settings configuration - part of API SET operation
+     *
+     * @param $input - array of configuration to save
+     * @throws Exception with error message
+     */
+    private function saveSettings($input) {
+        $dir = $this->confFolderPath;
+        $file = $this->fullConfFilePath[$this::CONF_TYPE_SETTINGS];
+        $continue = true;
+        $result = "";
+
+        if (!is_dir($dir) || !is_writable($dir)) {
+            $continue = false;
+            $result = "Configuration directory [" . $dir . "] does not exist or is not writable";
+        }
+
+        try {
+            if ($continue) {
+                if (!file_put_contents($file, preg_replace('~\R~u', "\n", $input))) {
+                    $continue = false;
+                    $result = "Error while saving a file [" . $file . "]";
                 }
             }
         } catch(Exception $e) {
@@ -337,7 +403,7 @@ class ConfigurationManager {
             if ($continue) {
                 if (!copy($bak_file,$file)) {
                     $continue = false;
-                    $result = "Backup restore serror [from: " . $bak_file . ", to: " . $file . "]";
+                    $result = "Backup restore error [from: " . $bak_file . ", to: " . $file . "]";
                 }
             }
         } catch(Exception $e) {
@@ -356,7 +422,7 @@ class ConfigurationManager {
         //configure the configuration folder path
         $this->confFolderPath = "/mnt/HD/HD_a2/.systemfile/mySync/etc"; //TODO
         $this->appFolderPath = "/mnt/HD/HD_a2/Nas_Prog/mySync";
-        $this->confFiles = array( 1 => "rclone.conf", 2 => "rclone_job_def.conf" );
+        $this->confFiles = array( 0 => "my_sync_deamon.conf", 1 => "rclone.conf", 2 => "rclone_job_def.conf" );
 
         //concatenate to form Full Log Path
         $this->fullConfFilePath = array_map(function($file):string { return $this->confFolderPath . "/" . $file; }, $this->confFiles);
@@ -371,7 +437,7 @@ class ConfigurationManager {
      */
     private function getInput($param) {
         $value = htmlspecialchars($_POST[$param]);
-        return empty($value) ? null : $value;
+        return !isset($value) ? null : $value;
     }
 }
 ?>

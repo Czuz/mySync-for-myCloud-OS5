@@ -13,7 +13,8 @@
 # Parameters                                                               #
 # No   Description                        Example                          #
 # ---- ---------------------------------- -------------------------------- #
-#    1 [Optional] Sleep time in seconds   60                               #
+#    1 [Optional] Sleep time in seconds   3600                             #
+#    2 [Optional] Log retention in days     -1 (unlimited)                 #
 #                                                                          #
 ############################################################################
 # Exit Codes                                                               #
@@ -32,6 +33,9 @@
 # Date        Programmer          Description                              #
 # ----------- ------------------- ---------------------------------------- #
 # 24-Oct-2020 Czuz                Initial Version                          #
+# 20-Nov-2022 Czuz                Integration with notification service    #
+# 24-Feb-2025 Czuz                Log rotation                             #
+# 30-Nov-2025 Czuz                Log retention                            #
 ############################################################################
 # STEP001 -- Initialize Standard Variables                                 #
 ############################################################################
@@ -48,33 +52,52 @@ INIT_PGM=`basename ${INIT_EXE}`
 INIT_DIR=`dirname ${INIT_EXE}`
 INIT_VER="1.0"
 
-LOG_DATE=`date +%Y%m%d%H%M%S`
-LOG_FILE_NAME=${INIT_PGM}.${LOG_DATE}.${INIT_PID}
+loginit () {
+  LOG_DATE=`date +%Y%m%d%H%M%S`
+  LOG_FILE_NAME=${INIT_PGM}.${LOG_DATE}.${INIT_PID}
 
-LOG_FILE=${LOG_DIR}/${LOG_FILE_NAME}.log
-LOG_RCLL=${LOG_DIR}/${LOG_FILE_NAME}.rclone.log
+  LOG_FILE=${LOG_DIR}/${LOG_FILE_NAME}.log
+  LOG_RCLL=${LOG_DIR}/${LOG_FILE_NAME}.rclone.log
+
+  touch ${LOG_FILE}
+  RC=${?}
+
+  if [ ${1:0:5} == "START" ] ; then
+    echo "`date +%Y-%m-%d\ %H:%M:%S` START   : ${INIT_EXE}"                                                       | tee -a ${LOG_FILE}
+  else
+    echo "`date +%Y-%m-%d\ %H:%M:%S` LOGINIT : continue ${INIT_EXE}"                                              | tee -a ${LOG_FILE}
+  fi
+
+  if [ ${RC} -ne 0 ] ; then
+    echo "`date +%Y-%m-%d\ %H:%M:%S` LOGINIT : Unable to create ${LOG_FILE}, please check permissions"            | tee -a ${LOG_FILE}
+    echo "`date +%Y-%m-%d\ %H:%M:%S` $1 (FAILED)"                                                                 | tee -a ${LOG_FILE}
+    fireAlert -a 1400 -p mySync -f
+    exit 1
+  fi
+
+  echo "`date +%Y-%m-%d\ %H:%M:%S` LOGINIT : Main LOG File     : ${LOG_FILE}"                                     | tee -a ${LOG_FILE}
+  echo "`date +%Y-%m-%d\ %H:%M:%S` LOGINIT : rclone Log File   : ${LOG_RCLL}"                                     | tee -a ${LOG_FILE}
+}
+
+logcleanup() {
+  if [ ${1:--1} -ge 0 ] ; then
+    find ${LOG_DIR} -depth -mindepth 1 -daystart -mtime +${1} -delete
+  fi
+}
+
 CONF_FILE=${CONF_DIR}/rclone_job_def.conf
+SETTINGS_FILE=${CONF_DIR}/my_sync_deamon.conf
+if [ -r ${SETTINGS_FILE} ] ; then
+  . ${SETTINGS_FILE}
+fi
 
 EXIT_CODE=0
 HUP=0
 trap "HUP=1; echo \"`date +%Y-%m-%d\ %H:%M:%S` SIGHUP  : Termination signal\" | tee -a ${LOG_FILE}; pkill -P $$" SIGINT SIGHUP
 
-touch ${LOG_FILE} 
-RC=${?}
-
-echo "`date +%Y-%m-%d\ %H:%M:%S` START   : ${INIT_EXE}"                                                           | tee -a ${LOG_FILE}
+loginit "START   :"
 echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Initialize Standard Variables (BEGIN)"                                 | tee -a ${LOG_FILE}
-
-if [ ${RC} -ne 0 ] ; then
-  echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Unable to create ${LOG_FILE}, please check permissions"              | tee -a ${LOG_FILE}
-  echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Initialize Standard Variables (FAILED)"                              | tee -a ${LOG_FILE}
-  fireAlert -a 1400 -p mySync -f
-  exit 1
-fi
 echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Script ${INIT_EXE} is being executed by `whoami` on `date`"            | tee -a ${LOG_FILE}
-
-echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Main LOG File     : ${LOG_FILE}"                                       | tee -a ${LOG_FILE}
-echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : rclone Log File   : ${LOG_RCLL}"                                       | tee -a ${LOG_FILE}
 
 if [ ${CONF_DIR:-none} = none ] ; then
   echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Variable CONF_DIR not set - unable to continue"                      | tee -a ${LOG_FILE}
@@ -84,8 +107,13 @@ if [ ${CONF_DIR:-none} = none ] ; then
 fi
 
 if [ ${SLEEP_TIME:-none} = none ] || [[ ! ${SLEEP_TIME} =~ ^[0-9]+$ ]] ; then
-  echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Variable SLEEP_TIME not set - setting default to 60s"                | tee -a ${LOG_FILE}
-  SLEEP_TIME=60
+  echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Variable SLEEP_TIME not set - setting default to 3600s"              | tee -a ${LOG_FILE}
+  SLEEP_TIME=3600
+fi
+
+if [ ${LOG_RETENTION:-none} = none ] || [[ ! ${LOG_RETENTION} =~ ^-?[0-9]+$ ]] ; then
+  echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Variable LOG_RETENTION not set - setting default to -1 (unlimited)"  | tee -a ${LOG_FILE}
+  LOG_RETENTION=-1
 fi
 
 echo "`date +%Y-%m-%d\ %H:%M:%S` STEP001 : Initialize Standard Variables (END-OK)"                                | tee -a ${LOG_FILE}
@@ -99,8 +127,13 @@ echo "`date +%Y-%m-%d\ %H:%M:%S` STEP010 :                    they are : ${*}"  
 
 case ${#} in
   0) IN_SLEEP_TIME=${SLEEP_TIME}
+     IN_LOG_RETENTION=${LOG_RETENTION}
      ;;
   1) IN_SLEEP_TIME=${1}
+     IN_LOG_RETENTION=${LOG_RETENTION}
+     ;;
+  2) IN_SLEEP_TIME=${1}
+     IN_LOG_RETENTION=${2}
      ;;
   *) echo "`date +%Y-%m-%d\ %H:%M:%S` STEP010 : Incorrect number of parameters"                                   | tee -a ${LOG_FILE}
      echo "`date +%Y-%m-%d\ %H:%M:%S` STEP010 : Usage : ${INIT_EXE} [SLEEP_TIME]"                                 | tee -a ${LOG_FILE}
@@ -114,7 +147,13 @@ if [ ${IN_SLEEP_TIME:-none} = none ] || [[ ! ${IN_SLEEP_TIME} =~ ^[0-9]+$ ]] ; t
   IN_SLEEP_TIME=${SLEEP_TIME}
 fi
 
-echo "`date +%Y-%m-%d\ %H:%M:%S` STEP010 : Sleep Time : ${IN_SLEEP_TIME}"                                         | tee -a ${LOG_FILE}
+if [ ${IN_LOG_RETENTION:-none} = none ] || [[ ! ${IN_LOG_RETENTION} =~ ^-?[0-9]+$ ]] ; then
+  echo "`date +%Y-%m-%d\ %H:%M:%S` STEP010 : Incorrect Log Retention (${IN_LOG_RETENTION}) - falling back to default" | tee -a ${LOG_FILE}
+  IN_LOG_RETENTION=${LOG_RETENTION}
+fi
+
+echo "`date +%Y-%m-%d\ %H:%M:%S` STEP010 : Sleep Time    : ${IN_SLEEP_TIME}"                                      | tee -a ${LOG_FILE}
+echo "`date +%Y-%m-%d\ %H:%M:%S` STEP010 : Log Retention : ${IN_LOG_RETENTION}"                                   | tee -a ${LOG_FILE}
 echo "`date +%Y-%m-%d\ %H:%M:%S` STEP010 : Checking InComming Parameters (END-OK)"                                | tee -a ${LOG_FILE}
 
 ##########################################################################
@@ -207,6 +246,13 @@ do
   if [ ${HUP} -eq 0 ] ; then
     sleep $IN_SLEEP_TIME &
 
+    logcleanup ${IN_LOG_RETENTION} 2>/dev/null
+
+    if [ ${LOG_DATE:0:8} != $(date +%Y%m%d) ] ; then
+      echo "`date +%Y-%m-%d\ %H:%M:%S` LOGINIT : rotating logs"                                                  | tee -a ${LOG_FILE}
+      loginit "STEP030 : Execute synchronization jobs"
+    fi
+
     for ((i=1;i<=$TOTAL_JOB_NO;i++)); do
       if [ ${sync_jobs[$i,has_error]} -eq 0 ]; then
         rm -f ${LOG_RCLL} 2>/dev/null
@@ -252,6 +298,7 @@ fi
 echo "`date +%Y-%m-%d\ %H:%M:%S` STEP999 : CleanUp and Exit (BEGIN)"                                              | tee -a ${LOG_FILE}
 
 rm -f ${LOG_RCLL} 2>/dev/null
+logcleanup ${IN_LOG_RETENTION} 2>/dev/null
 
 echo "`date +%Y-%m-%d\ %H:%M:%S` STEP999 : CleanUp and Exit (END-OK)"                                             | tee -a ${LOG_FILE}
 echo "`date +%Y-%m-%d\ %H:%M:%S` STOP    : ${INIT_EXE} completed successfully"                                    | tee -a ${LOG_FILE}

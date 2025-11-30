@@ -1,16 +1,16 @@
 # mySync for myCloud OS5
 ## Purpose
-This is an addon for WD MyCloud NAS systems running under OS5. Addon utilizes [rclone](https://rclone.org/) which is "a command line program to sync files and directories to and from different cloud storage providers."
+This is an add-on for WD MyCloud NAS systems running OS5. The add-on utilizes [rclone](https://rclone.org/), which is "a command line program to sync files and directories to and from different cloud storage providers."
 
-You might use mySync to periodically sync selected directories or backup whole NAS to other cloud storage of your choice.
+You can use mySync to periodically sync selected directories or backup the whole NAS to other cloud storage of your choice.
 
 ## Disclaimers
 1) Use your own judgement to decide whether rclone is secure enough for your needs. You will have to authorize this tool for access to your other cloud account.
-2) Get familiar with rclone documentation and make sure to test your rclone configuration in controled environment before deploying to NAS. Wrong configuration might send data to unintended location, overwrite or delete data. 
+2) Get familiar with rclone documentation and make sure to test your rclone configuration in a controlled environment before deploying to the NAS. Wrong configuration might send data to an unintended location, overwrite, or delete data. 
 3) mySync has been created for my personal needs. As long as it fulfills my expectations I don't plan heavy involvement in further development.
 
 ## How to build package from sources
-### Prerequisits
+### Prerequisites
 1) WD MyCloud **OS5** SDK - you will need mksapkg tool to build a package. You can:
    - Check if the [official site](https://developer.westerndigital.com/develop/wd/sdk.html) has been updated to include mksapkg for OS5.
    - Check on the [official WD community site](https://community.wd.com/t/whare-are-the-os5-sdk-tools/266486/3).
@@ -38,7 +38,7 @@ where *module_name* is one of:
 In the MyCloud Administration Console select Apps menu and use "Install an app manually". Select the package you have built by yourself or downloaded from this site.
 
 ## How to configure
-There are two configurations you will have to privide:
+There are two configurations you will have to provide:
 ### Remote Connections
 Configure your connection using rclone locally on your desktop:
 ```
@@ -67,7 +67,7 @@ where:
 * *target_path* is a path on the remote site
 * *options* are optional rclone options you might want to define, e.g. --max-duration duration
 
-Remember to escape spaces and special characters in paths with "\", e.g.: `/mnt/HD/HD_a2/Public/Tim\ O\'Raily`
+Remember to escape spaces and special characters in paths with "\", e.g.: `/mnt/HD/HD_a2/Public/Tim\ O\'Reilly`
 
 By default following options are used:
 ```
@@ -87,19 +87,28 @@ Save the configuration and restart the service.
 ## How to setup notifications
 In the MyCloud Administration Console select `Settings -> Notifications`.
 
-Configure according to your preferences. mySync failures will be reported as a following *Warning*:
+Configure according to your preferences. mySync failures will be reported as the following *Warning*:
 > Remote Backup Error
 >
 > An error occurred for the remote backup job named mySync. Please check the backup job detail.
 >
 > Code: 1400
 
-## Troubleshooting
-In the MyCloud Administration Console select `Apps menu -> mySync -> Configure -> Logs`.
+## How to setup log retention
+In the MyCloud Administration Console, select `Apps menu -> mySync -> Configure -> Settings`.
 
-By default logs are kept here: /mnt/HD/HD_a2/.systemfile/mySync/log
+Enter the desired number of days to keep logs and click Save. Entering "-1" means logs are kept forever.
+
+## Troubleshooting
+In the MyCloud Administration Console, select `Apps menu -> mySync -> Configure -> Logs`.
+
+By default, logs are kept here: /mnt/HD/HD_a2/.systemfile/mySync/log
 
 ## Changes
+\[2025-11-30\] - v1.2.0
+- Added log rotation
+- Added configurable logs retention
+
 \[2022-11-20\] - v1.1.0
 - Integration with notification services of MyCloud
 
@@ -121,4 +130,4 @@ By default logs are kept here: /mnt/HD/HD_a2/.systemfile/mySync/log
 - [x] Online log browsing in MyCloud Administration Console
 - [x] Online configuration in MyCloud Administration Console
 - [x] Integration with notification services of MyCloud
-- [ ] Log retention
+- [x] Log retention

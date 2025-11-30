@@ -26,5 +26,6 @@ if [ -L ${volume:-/tmp}/.systemfile/mySync/etc/rclone_job_def.conf ]; then
 fi
 
 # Parametrization is managed through Web GUI
+touch ${volume:-/tmp}/.systemfile/mySync/etc/my_sync_deamon.conf
 touch ${volume:-/tmp}/.systemfile/mySync/etc/rclone.conf
 touch ${volume:-/tmp}/.systemfile/mySync/etc/rclone_job_def.conf

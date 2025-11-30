@@ -5,6 +5,10 @@ var errorLevel = {
 }
 
 var confType = {
+    Settings: {
+        id: 0,
+        prefix: "apps_mySyncSettings"
+    },
     Remotes: {
         id: 1,
         prefix: "apps_mySyncRemotes"
@@ -76,6 +80,19 @@ function init_validation() {
         },
         "If your paths have spaces or shell metacharacters (e.g. *, ?, $, ', etc.) then you must escape them with '\\' (e.g. \\?). Don't use \" character."
     );
+    $("#apps_mySyncSettings_form").validate({
+        rules: {
+            apps_mySyncSettings_sleeptime: "required",
+            apps_mySyncSettings_logretention: "required",
+        },
+        messages: {
+            apps_mySyncSettings_sleeptime: "Provide numeric value greater or equal to 1",
+            apps_mySyncSettings_logretention: "Provide numeric value greater or equal to -1",
+        },
+        submitHandler: function () {
+            submit_configuration(confType.Settings);
+        }
+    });
     $("#apps_mySyncFlows_form").validate({
         rules: {
             apps_mySyncFlows_input: {
@@ -103,13 +120,25 @@ function init_validation() {
 // Page controler
 function page_load() {
     init_validation();
+    init_tooltip(".TooltipIcon");
     $("#apps_mySyncAbout_button").click(function() {
         $("#mySyncAbout").show();
+        $("#mySyncSettings").hide();
         $("#mySyncRemotes").hide();
         $("#mySyncFlows").hide();
     });
+    $("#apps_mySyncSettings_button").click(function() {
+        $("#mySyncAbout").hide();
+        $("#mySyncSettings").show();
+        $("#mySyncRemotes").hide();
+        $("#mySyncFlows").hide();
+        if (!$("#apps_mySyncSettings_sleeptime").val()) {
+            get_conf(confType.Settings);
+        }
+    });
     $("#apps_mySyncRemotes_button").click(function() {
         $("#mySyncAbout").hide();
+        $("#mySyncSettings").hide();
         $("#mySyncRemotes").show();
         $("#mySyncFlows").hide();
         if (!$("#apps_mySyncRemotes_info").val()) {
@@ -118,6 +147,7 @@ function page_load() {
     });
     $("#apps_mySyncFlows_button").click(function() {
         $("#mySyncAbout").hide();
+        $("#mySyncSettings").hide();
         $("#mySyncRemotes").hide();
         $("#mySyncFlows").show();
         if (!$("#apps_mySyncFlows_input").val()) {
@@ -130,6 +160,9 @@ function page_load() {
     $("#apps_mySyncFlows_input").on('input', function () {
         this.style.height = "";
         this.style.height = (5+((this.scrollHeight < 95) ? 95 : (this.scrollHeight > 345) ? 345 : this.scrollHeight)) + "px";
+    });
+    $("#apps_mySyncSettings_restore").click(function() {
+        restore_conf(confType.Settings);
     });
     $("#apps_mySyncFlows_restore").click(function() {
         restore_conf(confType.Flows);
@@ -174,9 +207,10 @@ function page_unload() {
     $("#apps_mySyncLogsSubMenu").empty();
     $("#apps_mySyncLogsContent").empty();
     $("#apps_mySyncAbout_button").unbind('click');
+    $("#apps_mySyncSettings_button").unbind('click');
     $("#apps_mySyncRemotes_button").unbind('click');
     $("#apps_mySyncFlows_button").unbind('click');
-    $("#apps_mySyncFlows_restore, #apps_mySyncRemotes_restore").unbind('click');
+    $("#apps_mySyncSettings_restore, #apps_mySyncFlows_restore, #apps_mySyncRemotes_restore").unbind('click');
     $("#apps_mySyncFlows_input").unbind('input');
     $("#apps_mySyncLogs_filter").unbind('keypress');
     $("#apps_mySyncLogs_downloadFile_button").unbind('click');
@@ -224,7 +258,10 @@ function get_conf(type) {
         var jsonData = $.parseJSON(data);
 
         if (jsonData && jsonData.status) {
-            if (type === confType.Remotes) {
+            if (type === confType.Settings) {
+                $("#apps_mySyncSettings_sleeptime").val(Math.floor(jsonData.data.configuration.SLEEP_TIME/60));
+                $("#apps_mySyncSettings_logretention").val(jsonData.data.configuration.LOG_RETENTION);
+            } else if (type === confType.Remotes) {
                 $("#apps_mySyncRemotes_info").val(jsonData.data.configuration.join('\n'));
                 $("#apps_mySyncFlows_info").val(jsonData.data.configuration.join('\n'));
             } else if (type === confType.Flows) {
@@ -251,7 +288,10 @@ function set_conf(type, force_backup = false) {
     form_data.append('restart', $("#" + type.prefix + "_restart").is(':checked'));
     form_data.append('backup', force_backup || $("#" + type.prefix + "_backup").is(':checked'));
     // Type specific parameters
-    if (type === confType.Remotes) {
+    if (type === confType.Settings) {
+        form_data.append('sleeptime', $("#apps_mySyncSettings_sleeptime").val()*60);
+        form_data.append('logretention', $("#apps_mySyncSettings_logretention").val());
+    } else if (type === confType.Remotes) {
         form_data.append('remotes', $('#apps_mySyncRemotes_input').prop('files')[0]);
         form_data.append('override', ($('input[name="Override"]:checked', '#mySyncRemotes').val() === 'true'));
     } else if (type === confType.Flows) {
